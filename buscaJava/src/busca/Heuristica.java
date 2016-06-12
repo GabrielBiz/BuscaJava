@@ -1,17 +1,15 @@
 package busca;
 
-
 /**
  * Interface para estados que implementam a função h()
  *
- * @author  jomi
+ * @author jomi
  */
 
 public interface Heuristica {
-    
-    /**
-     * estimativa de custo
-     */
-    public int h();
 
+	/**
+	 * estimativa de custo
+	 */
+	public int h();
 }

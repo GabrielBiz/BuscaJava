@@ -27,6 +27,10 @@ public class Nodo implements Comparable<Nodo> {
 		}
 	}
 
+	public boolean isEmpty() {
+		return estado == null;
+	}
+
 	public int getProfundidade() {
 		return profundidade;
 	}
@@ -55,6 +59,13 @@ public class Nodo implements Comparable<Nodo> {
 			f = g + ((Heuristica) estado).h();
 		}
 		return f;
+	}
+
+	void criarSucessores() {
+		List<Estado> s = estado.sucessores();
+		for (Estado e : s) {
+			sucessores.add(new Nodo(e, this));
+		}
 	}
 
 	void invertePaternidade() {
@@ -147,6 +158,8 @@ public class Nodo implements Comparable<Nodo> {
 	}
 
 	public String toString() {
-		return estado.toString();
+		// return BuscaCompetitiva.heuristicaNodo.get(this) + (profundidade % 2
+		// == 0 ? " max" : " min");
+		return estado.toString() + BuscaCompetitiva.heuristicaNodo.get(this);
 	}
 }

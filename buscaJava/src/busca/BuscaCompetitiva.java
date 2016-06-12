@@ -1,49 +1,93 @@
 package busca;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.function.BiPredicate;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class BuscaCompetitiva extends Busca {
 
 	private int profundidade = 4;
-	private Integer min = null;
-	private Integer max = null;
+	private boolean aplicarPoda = true;
+	public static Map<Nodo, Integer> heuristicaNodo = new HashMap<>();
+
+	public BuscaCompetitiva(MostraStatusConsole ms, final int profundidade) {
+		super(ms);
+		if (profundidade < 3) {
+			throw new IllegalArgumentException("Profundidade não pode ser menor que 3.");
+		}
+		this.profundidade = profundidade - 1;
+	}
 
 	public BuscaCompetitiva(int profundidade) {
 		if (profundidade < 3) {
 			throw new IllegalArgumentException("Profundidade não pode ser menor que 3.");
 		}
-		this.profundidade = profundidade;
+		this.profundidade = profundidade - 1;
 	}
 
 	@Override
 	public Nodo busca(final Estado inicial) throws Exception {
+		heuristicaNodo.clear();
 		final Nodo raiz = new Nodo(inicial, null);
-		final Nodo max = encontrar(Arrays.asList(raiz), 1);
-		return max;
+		if (aplicarMinMax(raiz)) {
+			for (int i = 0; i < profundidade; i++) {
+				vp(i);
+			}
+			// LinkedList<Nodo> sucessores = raiz.getSucessores();
+			// for (Nodo nodo : sucessores) {
+			// System.out.print(nodo + ";");
+			// }
+			// System.out.println();
+			// System.out.println("Heuristica: " + heuristicaNodo.get(raiz));
+			// System.out.println(nodo(heuristicaNodo.get(raiz), profundidade));
+			return nodo(heuristica(raiz), 1);
+		}
+		throw new RuntimeException("Não foi possível aplicar o algoritmo corretamente.");
 	}
 
-	public static void main(String[] args) {
-		BuscaCompetitiva b = new BuscaCompetitiva(5);
+	public void vp(int i) {
+		Set<Entry<Nodo, Integer>> entrySet = heuristicaNodo.entrySet();
+		for (Entry<Nodo, Integer> entry : entrySet) {
+			if (entry.getKey().profundidade == i) {
+				System.out.print(entry.getKey() + ";");
+			}
+		}
+		System.out.println();
+	}
 
-		EHData a0 = new EHData(0, Arrays.asList(arA(), arB()));
+	public static void main(String[] args) throws Exception {
+		BuscaCompetitiva b = new BuscaCompetitiva(50);
+		EHData e = new EHData(0, Arrays.asList(arA(), arB()));
+		b.busca(e);
+	}
 
-		System.out.println(b.encontrar(Arrays.asList(new Nodo(a0, null)), 1));
+	private Nodo nodo(final int h, final int profundidade) {
+		Set<Entry<Nodo, Integer>> entrySet = heuristicaNodo.entrySet();
+		for (Entry<Nodo, Integer> entry : entrySet) {
+			if (entry.getValue() == h && entry.getKey().profundidade == profundidade) {
+				return entry.getKey();
+			}
+		}
+		return null;
 	}
 
 	public static EHData arA() {
-		EHData a3 = new EHData(8, null);
-		EHData b3 = new EHData(23, null);
+		EHData a3 = new EHData(8, Collections.emptyList());
+		EHData b3 = new EHData(23, Collections.emptyList());
 
-		EHData c3 = new EHData(-47, null);
-		EHData d3 = new EHData(28, null);
+		EHData c3 = new EHData(-47, Collections.emptyList());
+		EHData d3 = new EHData(28, Collections.emptyList());
 
-		EHData e3 = new EHData(-30, null);
-		EHData f3 = new EHData(-37, null);
+		EHData e3 = new EHData(-30, Collections.emptyList());
+		EHData f3 = new EHData(-37, Collections.emptyList());
 
-		EHData g3 = new EHData(3, null);
-		EHData h3 = new EHData(-41, null);
+		EHData g3 = new EHData(3, Collections.emptyList());
+		EHData h3 = new EHData(-41, Collections.emptyList());
 
 		EHData a2 = new EHData(0, Arrays.asList(a3, b3));
 
@@ -62,17 +106,17 @@ public class BuscaCompetitiva extends Busca {
 	}
 
 	public static EHData arB() {
-		EHData a3 = new EHData(-19, null);
-		EHData b3 = new EHData(4, null);
+		EHData a3 = new EHData(-19, Collections.emptyList());
+		EHData b3 = new EHData(4, Collections.emptyList());
 
-		EHData c3 = new EHData(-49, null);
-		EHData d3 = new EHData(4, null);
+		EHData c3 = new EHData(-49, Collections.emptyList());
+		EHData d3 = new EHData(4, Collections.emptyList());
 
-		EHData e3 = new EHData(43, null);
-		EHData f3 = new EHData(45, null);
+		EHData e3 = new EHData(43, Collections.emptyList());
+		EHData f3 = new EHData(45, Collections.emptyList());
 
-		EHData g3 = new EHData(-26, null);
-		EHData h3 = new EHData(-14, null);
+		EHData g3 = new EHData(-26, Collections.emptyList());
+		EHData h3 = new EHData(-14, Collections.emptyList());
 
 		EHData a2 = new EHData(0, Arrays.asList(a3, b3));
 
@@ -90,140 +134,102 @@ public class BuscaCompetitiva extends Busca {
 		return a0;
 	}
 
-	public Nodo encontrar(List<Nodo> nodos, int nivel) {
-		if (profundidade != nivel) {
-			for (Nodo nodo : nodos) {
-				final List<Nodo> sucessores = sucessores(nodo);
-				if (!sucessores.isEmpty()) {
-					nodo.addSucessores(sucessores);
-					final Nodo novo = encontrar(sucessores, nivel + 1);
-					nodo.estado = novo.estado;
+	public boolean aplicarMinMax(final Nodo nodo) {
+		final boolean isFolha = isFolha(nodo);
+		if (!isFolha) {
+			final LinkedList<Nodo> sucessores = nodo.getSucessores();
+			for (Nodo sucessor : sucessores) {
+				if (aplicarMinMax(sucessor)) {
+					heuristicaNodo.put(nodo, heuristica(sucessor));
+					if (podar(nodo)) {
+						// System.out.println(nodo.montaCaminho());
+						// System.out.println("pai: " +
+						// heuristica(nodo.getPai()) + (isMax(nodo.getPai()) ? "
+						// max" : " min"));
+						// System.out.println("filho: " + heuristica(nodo));
+						return false;
+					}
 				}
 			}
-			Nodo resultado;
-			if (nivel % 2 == 0) {
-				resultado = findMax(nodos);
-				int resultadoH = heuristica(resultado);
-				if (min == null || min > resultadoH) {
-					min = resultadoH;
-				}
-				max = null;
-			} else {
-				resultado = findMin(nodos);
-				int resultadoH = heuristica(resultado);
-				if (max == null || max < resultadoH) {
-					max = resultadoH;
-				}
-				min = null;
-			}
-			return resultado;
 		}
-		Nodo resultado;
-		if (nivel % 2 == 0) {
-			resultado = findMax(nodos);
-			int resultadoH = heuristica(resultado);
-			if (min == null || min > resultadoH) {
-				min = resultadoH;
-			}
-			min = null;
-		} else {
-			resultado = findMin(nodos);
-			int resultadoH = heuristica(resultado);
-			if (max == null || max < resultadoH) {
-				max = resultadoH;
-			}
-			min = null;
+
+		final Nodo pai = nodo.pai;
+		if (pai == null) {
+			return !isEmpty(nodo);
 		}
-		return resultado;
+		if (isEmpty(pai)) {
+			return isFolha || !isEmpty(nodo);
+		}
+		final int hPai = heuristica(pai);
+		final int hNodo = heuristica(nodo);
+		final int profundidadePai = pai.getProfundidade();
+		return profundidadePai % 2 == 0 ? hNodo > hPai : hNodo < hPai;
 	}
 
-	private Nodo findMin(final List<Nodo> nodos) {
-		if (nodos.isEmpty()) {
-			throw new IllegalArgumentException("O parâmetro 'nodos' não pode ser empty.");
+	public boolean podar(final Nodo nodo) {
+		if (nodo == null) {
+			throw new IllegalArgumentException("O parâmetro 'nodo' não pode ser nulo.");
 		}
-
-		Nodo menor = nodos.get(0);
-		int menorH = heuristica(menor);
-		if (max != null) {
-			if (max >= menorH) {
-				System.out.println("x" + max);
-				System.out.println(menorH);
-				return menor;
-			}
+		if (isEmpty(nodo)) {
+			return false;
 		}
-		for (int i = 1; i < nodos.size(); i++) {
-			final Nodo nodo = nodos.get(i);
-			int h = heuristica(nodo);
-			if (max != null) {
-				if (max >= h) {
-					System.out.println("x" + max);
-					System.out.println(h);
-					return nodo;
+		Nodo pai = nodo.getPai();
+		if (pai == null) {
+			return false;
+		}
+		final boolean nodoIsMax = isMax(nodo);
+		final int hNodo = heuristica(nodo);
+		do {
+			if (!isEmpty(pai)) {
+				final boolean paiIsMax = isMax(pai);
+				if (nodoIsMax != paiIsMax) {
+					final int hPai = heuristica(pai);
+					if (nodoIsMax) {
+						if (hPai < hNodo) {
+							return true;
+						}
+					} else {
+						if (hPai > hNodo) {
+							return true;
+						}
+					}
 				}
 			}
-			if (h < menorH) {
-				menorH = h;
-				menor = nodo;
-			}
-		}
-		return menor;
+			pai = pai.getPai();
+		} while (pai != null);
+		return false;
 	}
 
-	private Nodo findMax(final List<Nodo> nodos) {
-		if (nodos.isEmpty()) {
-			throw new IllegalArgumentException("O parâmetro 'nodos' não pode ser empty.");
+	private boolean isMax(final Nodo nodo) {
+		if (nodo == null) {
+			throw new IllegalArgumentException("O parâmetro 'nodo' não pode ser nulo.");
 		}
-
-		Nodo maior = nodos.get(0);
-		int maiorH = heuristica(maior);
-		if (min != null) {
-			if (min <= maiorH) {
-				System.out.println("n" + min);
-				System.out.println(maiorH);
-				return maior;
-			}
-		}
-		for (int i = 1; i < nodos.size(); i++) {
-			final Nodo nodo = nodos.get(i);
-			int h = heuristica(nodo);
-			if (min != null) {
-				if (min <= h) {
-					System.out.println("n" + min);
-					System.out.println(h);
-					return nodo;
-				}
-			}
-			if (h > maiorH) {
-				maiorH = h;
-				maior = nodo;
-			}
-		}
-		return maior;
+		final int profundidade = nodo.getProfundidade();
+		return profundidade % 2 == 0;
 	}
 
-	public Nodo find(final BiPredicate<Integer, Integer> p, final List<Nodo> nodos) {
-		if (nodos.isEmpty()) {
-			throw new IllegalArgumentException("O parâmetro 'nodos' não pode ser empty.");
+	private boolean isFolha(final Nodo nodo) {
+		if (nodo == null) {
+			throw new IllegalArgumentException("O parâmetro 'nodo' não pode ser nulo.");
 		}
-
-		Nodo valor = nodos.get(0);
-		int valorH = heuristica(valor);
-		for (int i = 1; i < nodos.size(); i++) {
-			final Nodo nodo = nodos.get(i);
-			int h = heuristica(nodo);
-			if (p.test(h, valorH)) {
-				valorH = h;
-				valor = nodo;
-			}
-		}
-		return valor;
+		nodo.criarSucessores();
+		return nodo.profundidade == profundidade || nodo.getSucessores().isEmpty();
 	}
 
-	private int heuristica(Nodo nodo) {
-		return cast(nodo).h();
+	private int heuristica(final Nodo nodo) {
+		if (heuristicaNodo.containsKey(nodo)) {
+			return heuristicaNodo.get(nodo);
+		}
+		final int h = cast(nodo).h();
+		heuristicaNodo.put(nodo, h);
+		return h;
 	}
 
-	private Heuristica cast(Nodo nodo) {
+	private boolean isEmpty(final Nodo nodo) {
+		return !heuristicaNodo.containsKey(nodo);
+	}
+
+	private Heuristica cast(final Nodo nodo) {
 		return (Heuristica) nodo.estado;
 	}
 }
