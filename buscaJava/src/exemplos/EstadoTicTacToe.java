@@ -8,11 +8,14 @@ import java.util.Scanner;
 import busca.BuscaCompetitiva;
 import busca.Estado;
 import busca.Heuristica;
+import busca.MostraStatusConsole;
 
 public class EstadoTicTacToe implements Estado, Heuristica {
 
-	private final Boolean[][] board = new Boolean[3][3];
+	public int lastX;
+	public int lastY;
 	private boolean isOpponent = false;
+	private final Boolean[][] board = new Boolean[3][3];
 
 	public void opponent(final int x, final int y) {
 		playAt(x, y, false);
@@ -20,14 +23,7 @@ public class EstadoTicTacToe implements Estado, Heuristica {
 
 	@Override
 	public int h() {
-		int r = 0;
-		if (hasWon(true)) {
-			r = +1;
-		}
-		if (hasWon(false)) {
-			r = -1;
-		}
-		return r;
+		return heuristic(true) - heuristic(false);
 	}
 
 	@Override
@@ -75,28 +71,28 @@ public class EstadoTicTacToe implements Estado, Heuristica {
 
 	public static void main(String[] args) throws Exception {
 		final Scanner scanner = new Scanner(System.in);
-		final BuscaCompetitiva search = new BuscaCompetitiva(4);
-
-		EstadoTicTacToe match = new EstadoTicTacToe();
-		match.playAt(0, 0, false);
-		match.playAt(2, 1, false);
-		match.playAt(2, 2, false);
-		match.playAt(0, 1, true);
-		match.playAt(1, 0, true);
-		match.playAt(2, 0, true);
-		match.print();
-		match.isOpponent = false;
-		match = (EstadoTicTacToe) search.busca(match).getEstado();
-		match.print();
-		// do {
-		// System.out.print("Informe a linha: ");
-		// int x = scanner.nextInt() - 1;
-		// System.out.print("Informe a coluna: ");
-		// int y = scanner.nextInt() - 1;
-		// match.playAt(x, y, false);
-		// match = (EstadoTicTacToe) search.busca(match).getEstado();
+		// match.playAt(0, 0, false);
+		// match.playAt(2, 1, false);
+		// match.playAt(2, 2, false);
+		// match.playAt(0, 1, true);
+		// match.playAt(1, 0, true);
+		// match.playAt(2, 0, true);
 		// match.print();
-		// } while (!match.ehMeta());
+		// match.isOpponent = false;
+		// match = (EstadoTicTacToe) search.busca(match).getEstado();
+		EstadoTicTacToe match = new EstadoTicTacToe();
+		match.print();
+		do {
+			System.out.print("Informe a linha: ");
+			int x = scanner.nextInt() - 1;
+			System.out.print("Informe a coluna: ");
+			int y = scanner.nextInt() - 1;
+			match.playAt(x, y, false);
+			if (!match.ehMeta()) {
+				match = (EstadoTicTacToe) new BuscaCompetitiva(new MostraStatusConsole(), 20).busca(match).getEstado();
+			}
+			match.print();
+		} while (!match.ehMeta());
 		scanner.close();
 	}
 
@@ -135,6 +131,8 @@ public class EstadoTicTacToe implements Estado, Heuristica {
 	}
 
 	private void playAt(final int x, final int y, final boolean v) {
+		lastX = x;
+		lastY = y;
 		isOpponent = v;
 		board[x][y] = v;
 	}
@@ -183,6 +181,51 @@ public class EstadoTicTacToe implements Estado, Heuristica {
 		return false;
 	}
 
+	private int heuristic(final boolean player) {
+		int h = 0;
+		if (lineIs(0, player)) {
+			h += 3;
+		} else if (lineAlmostIs(0, player)) {
+			h += 1;
+		}
+		if (lineIs(1, player)) {
+			h += 3;
+		} else if (lineAlmostIs(1, player)) {
+			h += 1;
+		}
+		if (lineIs(2, player)) {
+			h += 3;
+		} else if (lineAlmostIs(2, player)) {
+			h += 1;
+		}
+		if (columnIs(0, player)) {
+			h += 3;
+		} else if (columnAlmostIs(0, player)) {
+			h += 1;
+		}
+		if (columnIs(1, player)) {
+			h += 3;
+		} else if (columnAlmostIs(1, player)) {
+			h += 1;
+		}
+		if (columnIs(2, player)) {
+			h += 3;
+		} else if (columnAlmostIs(2, player)) {
+			h += 1;
+		}
+		if (firstDiagonalIs(player)) {
+			h += 3;
+		} else if (firstDiagonalAlmostIs(player)) {
+			h += 1;
+		}
+		if (secondDiagonalIs(player)) {
+			h += 3;
+		} else if (secondDiagonalAlmostIs(player)) {
+			h += 1;
+		}
+		return h;
+	}
+
 	private boolean firstDiagonalIs(final boolean v) {
 		return is(0, 0, v) && is(1, 1, v) && is(2, 2, v);
 	}
@@ -197,6 +240,86 @@ public class EstadoTicTacToe implements Estado, Heuristica {
 
 	private boolean columnIs(final int column, final boolean v) {
 		return is(0, column, v) && is(1, column, v) && is(2, column, v);
+	}
+
+	private boolean lineAlmostIs(final int line, final boolean v) {
+		int count = 0;
+		if (is(line, 0, !v)) {
+			return false;
+		} else if (is(line, 0, v)) {
+			count++;
+		}
+		if (is(line, 1, !v)) {
+			return false;
+		} else if (is(line, 1, v)) {
+			count++;
+		}
+		if (is(line, 2, !v)) {
+			return false;
+		} else if (is(line, 2, v)) {
+			count++;
+		}
+		return count > 1;
+	}
+
+	private boolean columnAlmostIs(final int column, final boolean v) {
+		int count = 0;
+		if (is(0, column, !v)) {
+			return false;
+		} else if (is(0, column, v)) {
+			count++;
+		}
+		if (is(1, column, !v)) {
+			return false;
+		} else if (is(1, column, v)) {
+			count++;
+		}
+		if (is(2, column, !v)) {
+			return false;
+		} else if (is(2, column, v)) {
+			count++;
+		}
+		return count > 1;
+	}
+
+	private boolean firstDiagonalAlmostIs(final boolean v) {
+		int count = 0;
+		if (is(0, 0, !v)) {
+			return false;
+		} else if (is(0, 0, v)) {
+			count++;
+		}
+		if (is(1, 1, !v)) {
+			return false;
+		} else if (is(1, 1, v)) {
+			count++;
+		}
+		if (is(2, 2, !v)) {
+			return false;
+		} else if (is(2, 2, v)) {
+			count++;
+		}
+		return count > 1;
+	}
+
+	private boolean secondDiagonalAlmostIs(final boolean v) {
+		int count = 0;
+		if (is(0, 2, !v)) {
+			return false;
+		} else if (is(0, 2, v)) {
+			count++;
+		}
+		if (is(1, 1, !v)) {
+			return false;
+		} else if (is(1, 1, v)) {
+			count++;
+		}
+		if (is(2, 0, !v)) {
+			return false;
+		} else if (is(2, 0, v)) {
+			count++;
+		}
+		return count > 1;
 	}
 
 	private boolean is(final int x, final int y, final boolean v) {

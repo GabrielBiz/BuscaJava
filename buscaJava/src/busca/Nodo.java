@@ -158,8 +158,6 @@ public class Nodo implements Comparable<Nodo> {
 	}
 
 	public String toString() {
-		// return BuscaCompetitiva.heuristicaNodo.get(this) + (profundidade % 2
-		// == 0 ? " max" : " min");
-		return estado.toString() + BuscaCompetitiva.heuristicaNodo.get(this);
+		return estado.toString();
 	}
 }
